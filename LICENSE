@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) March, 23, 2026 | illicit.page
+Copyright (c) 2026 illicit.page
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,21 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+This Software is part of the Illicit ecosystem and is offered on an
+experimental, "early access" basis. Use of this Software constitutes
+acknowledgment and acceptance of the full Terms of Service and Disclaimers
+published at https://illicit.page, including but not limited to:
+
+  • Intellectual Property – Third‑party brands, trademarks, and cultural
+    artifacts remain the property of their respective rights holders.
+  • Service Longevity – Services may be modified or discontinued at any time
+    without liability. Users are encouraged to fork and self‑host.
+  • Philosophy – Participation is experimental and not purely transactional.
+  • Affiliations – Illicit is independent and not endorsed by any third‑party
+    platforms.
+
+Nothing in this license shall be construed to alter or supersede the terms
+set forth on the official website.
