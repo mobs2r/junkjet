@@ -1,11 +1,13 @@
 TOOL.Name = "Junk Jet"
 TOOL.Category = "Fun + Games"
-TOOL.ClientConVar["dissolve"] = "1"
-TOOL.ClientConVar["launchspeed"] = "1"
-TOOL.ClientConVar["firemode"] = "0"
-TOOL.ClientConVar["propscale"] = "1"
-TOOL.ClientConVar["dissolvespeed"] = "10"
-TOOL.ClientConVar["slipperymode"] = "0"
+TOOL.ClientConVar = {
+    dissolve = "1",
+    launchspeed = "1",
+    firemode = "0",
+    propscale = "1",
+    dissolvespeed = "10",
+    slipperymode = "0"
+}
 
 TOOL.Props = {
     "models/props_junk/watermelon01.mdl",
@@ -25,168 +27,267 @@ TOOL.Props = {
 }
 
 TOOL.Entities = {
-    ["bouncyball"] = "sent_ball",
-    ["healthkit"] = "item_healthkit",
-    ["weapon_frag"] = "weapon_frag"
+    "sent_ball",
+    "item_healthkit",
+    "weapon_frag"
 }
+
+if SERVER then
+    local playerData = {}
+
+    hook.Add("PlayerInitialSpawn", "JunkJet_InitPlayerData", function(ply)
+        playerData[ply] = {
+            Props = {},
+            Entities = {}
+        }
+    end)
+
+    hook.Add("PlayerDisconnected", "JunkJet_CleanupPlayerData", function(ply)
+        playerData[ply] = nil
+    end)
+
+    local function GetPlayerProps(ply)
+        local data = playerData[ply]
+        if data and #data.Props > 0 then
+            return data.Props
+        end
+        return TOOL.Props
+    end
+
+    local function GetPlayerEntities(ply)
+        local data = playerData[ply]
+        if data and #data.Entities > 0 then
+            return data.Entities
+        end
+        return TOOL.Entities
+    end
+
+    local function AddProp(ply, model)
+        local data = playerData[ply]
+        if not data then return end
+        if not table.HasValue(data.Props, model) then
+            table.insert(data.Props, model)
+        end
+    end
+
+    local function RemoveProp(ply, model)
+        local data = playerData[ply]
+        if not data then return end
+        for i, v in ipairs(data.Props) do
+            if v == model then
+                table.remove(data.Props, i)
+                break
+            end
+        end
+    end
+
+    local function AddEntity(ply, class)
+        local data = playerData[ply]
+        if not data then return end
+        if not table.HasValue(data.Entities, class) then
+            table.insert(data.Entities, class)
+        end
+    end
+
+    local function RemoveEntity(ply, class)
+        local data = playerData[ply]
+        if not data then return end
+        for i, v in ipairs(data.Entities) do
+            if v == class then
+                table.remove(data.Entities, i)
+                break
+            end
+        end
+    end
+
+    concommand.Add("junkjet_addprop", function(ply, cmd, args)
+        if not IsValid(ply) or not args[1] then return end
+        AddProp(ply, args[1])
+        ply:ChatPrint(args[1] .. " added to your Junk Jet prop pool.")
+    end)
+
+    concommand.Add("junkjet_removeprop", function(ply, cmd, args)
+        if not IsValid(ply) or not args[1] then return end
+        RemoveProp(ply, args[1])
+        ply:ChatPrint(args[1] .. " removed from your Junk Jet prop pool.")
+    end)
+
+    concommand.Add("junkjet_addentity", function(ply, cmd, args)
+        if not IsValid(ply) or not args[1] then return end
+        AddEntity(ply, args[1])
+        ply:ChatPrint(args[1] .. " added to your Junk Jet entity pool.")
+    end)
+
+    concommand.Add("junkjet_removeentity", function(ply, cmd, args)
+        if not IsValid(ply) or not args[1] then return end
+        RemoveEntity(ply, args[1])
+        ply:ChatPrint(args[1] .. " removed from your Junk Jet entity pool.")
+    end)
+
+    concommand.Add("junkjet_clearitems", function(ply, cmd, args)
+        if not IsValid(ply) then return end
+        local data = playerData[ply]
+        if data then
+            data.Props = {}
+            data.Entities = {}
+            ply:ChatPrint("Your Junk Jet pools have been cleared.")
+        end
+    end)
+end
 
 local function isEmptyTable(tbl)
     return next(tbl) == nil
 end
 
-local function launchSawBlade(self, ply)
-    local entity = ents.Create("prop_physics")
-    entity:SetModel("models/props_junk/sawblade001a.mdl")
-    entity:SetMoveType(MOVETYPE_VPHYSICS)
-    entity:SetCollisionGroup(COLLISION_GROUP_NONE)
-    entity:SetPos(ply:EyePos() + (ply:GetAimVector() * 50))
-    entity:SetAngles(ply:EyeAngles())
-    entity:Spawn()
-
-    local phys = entity:GetPhysicsObject()
-    if IsValid(phys) then
-        local launchSpeed = 3000 + (self:GetClientNumber("launchspeed") * 10000)
-        phys:ApplyForceCenter(ply:GetAimVector() * launchSpeed)
-        phys:AddAngleVelocity(Vector(0, 5000, 0))
-    end
-
-    return entity
-end
-
-concommand.Add("junkjet_addprop", function(ply, cmd, args)
-    local prop = args[1]
-    if not prop then return end
-    local tool = ply:GetTool("junkjet")
-    if tool then
-        table.insert(tool.Props, prop)
-        ply:ChatPrint(prop .. " added to Junk Jet prop pool.")
-    end
-end)
-
-concommand.Add("junkjet_removeprop", function(ply, cmd, args)
-    local prop = args[1]
-    if not prop then return end
-    local tool = ply:GetTool("junkjet")
-    if tool then
-        for i, v in ipairs(tool.Props) do
-            if v == prop then
-                table.remove(tool.Props, i)
-                ply:ChatPrint(prop .. " removed from Junk Jet prop pool.")
-                break
-            end
-        end
-    end
-end)
-
-concommand.Add("junkjet_clearitems", function(ply, cmd, args)
-    local tool = ply:GetTool("junkjet")
-    if tool then
-        tool.Props = {}
-        tool.Entities = {}
-        ply:ChatPrint("All props and entities removed from Junk Jet pool.")
-    end
-end)
-
 function TOOL:LeftClick(trace)
     if CLIENT then return true end
+
+    local owner = self:GetOwner()
+    if not IsValid(owner) then return false end
+
+    local props = SERVER and GetPlayerProps(owner) or TOOL.Props
+    local entities = SERVER and GetPlayerEntities(owner) or TOOL.Entities
+
     local availableTypes = {}
-    if not isEmptyTable(self.Props) then table.insert(availableTypes, "prop") end
-    if not isEmptyTable(self.Entities) then table.insert(availableTypes, "entity") end
+    if not isEmptyTable(props) then table.insert(availableTypes, "prop") end
+    if not isEmptyTable(entities) then table.insert(availableTypes, "entity") end
+
     if #availableTypes == 0 then
-        self:GetOwner():EmitSound("buttons/button8.wav")
+        owner:EmitSound("buttons/button8.wav")
         if CLIENT then
             notification.AddLegacy("No items left in the launch pool!", NOTIFY_ERROR, 5)
         end
         return true
     end
-    local dropRates = {prop = 0.75, entity = 0.25}
-    local adjustedDropRates = {}
-    for _, subType in ipairs(availableTypes) do
-        adjustedDropRates[subType] = dropRates[subType]
-    end
+
+    local dropRates = { prop = 0.75, entity = 0.25 }
     local totalRate = 0
-    for _, rate in pairs(adjustedDropRates) do totalRate = totalRate + rate end
-    for subType, rate in pairs(adjustedDropRates) do
-        adjustedDropRates[subType] = rate / totalRate
+    for _, subType in ipairs(availableTypes) do
+        totalRate = totalRate + dropRates[subType]
     end
-    local choice = math.random()
-    local cumulativeRate = 0
+    local choice = math.random() * totalRate
     local selectedType
-    for subType, rate in pairs(adjustedDropRates) do
-        cumulativeRate = cumulativeRate + rate
-        if choice <= cumulativeRate then
+    local cumulative = 0
+    for _, subType in ipairs(availableTypes) do
+        cumulative = cumulative + dropRates[subType]
+        if choice <= cumulative then
             selectedType = subType
             break
         end
     end
+
     local entity
+    local isSawblade = false
+
     if selectedType == "entity" then
-        local entityClass = self.Entities[table.Random(table.GetKeys(self.Entities))]
+        local entityClass = table.Random(entities)
         entity = ents.Create(entityClass)
     else
-        local propModel = table.Random(self.Props)
+        local propModel = table.Random(props)
         if propModel == "models/props_junk/sawblade001a.mdl" then
-            entity = launchSawBlade(self, self:GetOwner())
+            entity = ents.Create("sawblade_thrown")
+            isSawblade = true
         else
             entity = ents.Create("prop_physics")
             entity:SetModel(propModel)
         end
     end
+
     if not IsValid(entity) then return false end
-    entity:SetPos(self:GetOwner():EyePos() + (self:GetOwner():GetAimVector() * 50))
-    entity:SetAngles(self:GetOwner():EyeAngles())
-    entity:Spawn()
-    local phys = entity:GetPhysicsObject()
-    if IsValid(phys) then
-        local launchSpeed = 3000 + (self:GetClientNumber("launchspeed") * 10000)
-        if entity:GetModel() ~= "models/props_junk/sawblade001a.mdl" then
-            local randomVector = Vector(math.Rand(-0.1, 0.1), math.Rand(-0.1, 0.1), math.Rand(0, 0.2))
-            phys:ApplyForceCenter((self:GetOwner():GetAimVector() + randomVector) * launchSpeed)
-        else
-            phys:ApplyForceCenter(self:GetOwner():GetAimVector() * launchSpeed)
-        end
+
+    entity:SetPos(owner:EyePos() + owner:GetAimVector() * 50)
+    entity:SetAngles(owner:EyeAngles())
+
+    if selectedType == "prop" and not isSawblade then
         local scaleValue = 1 + (self:GetClientNumber("propscale") / 20)
         entity:SetModelScale(scaleValue, 0)
-        if self:GetClientNumber("firemode") == 1 then entity:Ignite(30) end
-        if self:GetClientNumber("slipperymode") == 1 then phys:SetMaterial("ice") end
     end
+
+    entity:Spawn()
+
+    if isSawblade then
+        local phys = entity:GetPhysicsObject()
+        if IsValid(phys) then
+            local launchSpeed = 3000 + (self:GetClientNumber("launchspeed") * 10000)
+            phys:SetVelocity(owner:GetAimVector() * launchSpeed)
+            phys:AddAngleVelocity(Vector(0, 5000, 0))
+        end
+    else
+        local phys = entity:GetPhysicsObject()
+        if IsValid(phys) then
+            local launchSpeed = 3000 + (self:GetClientNumber("launchspeed") * 10000)
+            local aimVector = owner:GetAimVector()
+            local randomVector = Vector(math.Rand(-0.1, 0.1), math.Rand(-0.1, 0.1), math.Rand(0, 0.2))
+            phys:ApplyForceCenter((aimVector + randomVector) * launchSpeed)
+
+            if self:GetClientNumber("firemode") == 1 then
+                entity:Ignite(30)
+            end
+
+            if self:GetClientNumber("slipperymode") == 1 then
+                phys:SetMaterial("ice")
+            end
+        end
+    end
+
+    if self:GetClientNumber("firemode") == 1 and isSawblade then
+        entity:Ignite(30)
+    end
+
     undo.Create("Junk Jet")
     undo.AddEntity(entity)
-    undo.SetPlayer(self:GetOwner())
+    undo.SetPlayer(owner)
     undo.Finish()
+
     local dissolve = self:GetClientNumber("dissolve") == 1
     local dissolveSpeed = self:GetClientNumber("dissolvespeed")
     timer.Simple(dissolveSpeed, function()
-        if not IsValid(entity) then return end
-        if dissolve then entity:Dissolve() end
+        if IsValid(entity) and dissolve then
+            entity:Dissolve()
+        end
     end)
+
     return true
 end
 
 function TOOL:RightClick(trace)
     if CLIENT then return true end
-    if IsValid(trace.Entity) and trace.Entity:GetPhysicsObject():IsValid() then
-        local model = trace.Entity:GetModel()
-        local class = trace.Entity:GetClass()
-        local tool = self:GetOwner():GetTool("junkjet")
-        if class == "prop_physics" then
-            if table.HasValue(tool.Props, model) then
-                table.RemoveByValue(tool.Props, model)
-                self:GetOwner():ChatPrint(model .. " removed from Junk Jet prop pool.")
+
+    local owner = self:GetOwner()
+    if not IsValid(owner) then return false end
+
+    if IsValid(trace.Entity) then
+        local phys = trace.Entity:GetPhysicsObject()
+        if IsValid(phys) then
+            local model = trace.Entity:GetModel()
+            local class = trace.Entity:GetClass()
+
+            if class == "prop_physics" or class == "sawblade_thrown" then
+                local props = SERVER and GetPlayerProps(owner) or TOOL.Props
+                local propModel = model
+                if class == "sawblade_thrown" then
+                    propModel = "models/props_junk/sawblade001a.mdl"
+                end
+                if table.HasValue(props, propModel) then
+                    if SERVER then RemoveProp(owner, propModel) end
+                    owner:ChatPrint(propModel .. " removed from your Junk Jet prop pool.")
+                else
+                    if SERVER then AddProp(owner, propModel) end
+                    owner:ChatPrint(propModel .. " added to your Junk Jet prop pool.")
+                end
             else
-                table.insert(tool.Props, model)
-                self:GetOwner():ChatPrint(model .. " added to Junk Jet prop pool.")
-            end
-        else
-            if table.HasValue(tool.Entities, class) then
-                table.RemoveByValue(tool.Entities, class)
-                self:GetOwner():ChatPrint(class .. " removed from Junk Jet entity pool.")
-            else
-                table.insert(tool.Entities, class)
-                self:GetOwner():ChatPrint(class .. " added to Junk Jet entity pool.")
+                local entities = SERVER and GetPlayerEntities(owner) or TOOL.Entities
+                if table.HasValue(entities, class) then
+                    if SERVER then RemoveEntity(owner, class) end
+                    owner:ChatPrint(class .. " removed from your Junk Jet entity pool.")
+                else
+                    if SERVER then AddEntity(owner, class) end
+                    owner:ChatPrint(class .. " added to your Junk Jet entity pool.")
+                end
             end
         end
     end
+
     return true
 end
 
@@ -196,7 +297,10 @@ if CLIENT then
     language.Add("tool.junkjet.0", "M1: Fires junk... | M2: Scans junk...")
 
     function TOOL.BuildCPanel(panel)
-        panel:AddControl("Header", {Text = "Junk Jet", Description = "Launch junk at high speed!"})
+        panel:AddControl("Header", {
+            Text = "Junk Jet",
+            Description = "Launch junk at high speed!"
+        })
 
         panel:AddControl("CheckBox", {
             Label = "Fire Mode",
