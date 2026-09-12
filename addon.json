@@ -2,5 +2,5 @@
   "title": "Junk Jet | mobs2r's Tool Gun Utilities",
   "type": "tool",
   "tags": ["fun", "build"],
-  "ignore": [".git/*", ".github/*", "tests/*", "*.md", "*.json", "*.txt"]
+  "ignore": [".git/*", ".github/*", ".gitattributes", "tests/*", "*.md", "*.json", "*.txt"]
 }

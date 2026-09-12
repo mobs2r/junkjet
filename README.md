@@ -33,7 +33,11 @@ Supported entity classes are `sent_ball`, `item_healthkit`, and `item_battery`. 
 
 Sawblade-only mode launches the actual sawblade model as a native `prop_physics`. The addon enables the same first-impact state and physics flags used for a gravity-gun launch, and applies spin around the blade's proper axis.
 
-The Source engine then handles sharp-prop collision damage, zombie dismemberment, material/angle-dependent embedding, and releasing an embedded blade with the gravity gun. There is no scripted damage substitute, movement controller, weld, or freeze-on-contact callback.
+The Source engine handles sharp-prop collision damage, material/angle-dependent embedding, and releasing an embedded blade with the gravity gun. Blade flight and embedding use no scripted movement controller, weld, or freeze-on-contact callback.
+
+By default, **75% of qualifying first lethal body cuts leave a living classic-zombie torso** when the headcrab is intact. The original NPC changes to its native torso state, keeps its AI/relationships and headcrab, drops its legs, and receives half its original maximum health. Head-level impacts, headless zombies, existing crawlers, and unrelated props/NPC classes do not get this survival treatment. A brief grace for repeat contact with that same blade prevents one collision from instantly killing its new crawler; other attacks still work. Server damage vetoes remain effective. This is an intentional first-cut survival adjustment on top of native blade physics.
+
+Set `junkjet_crawlerchance` from 0 to 100 to control survival; 0 restores fully native lethal cutting. This applies to standard `npc_zombie` models, not third-party zombie implementations.
 
 Native behavior has native conditions: slow impacts, glancing hits, metal/grate surfaces, and impacts after the initial collision can bounce rather than embed. Damage depends on physics and server rules. Gravity, drag, and the server's VPhysics velocity limits still apply. Default speed is chosen above the native embedding threshold. These are the engine's rules, not a guarantee that every shot cuts or sticks.
 
@@ -66,6 +70,7 @@ Run **Audit default models** (`junkjet_diagnose`) for the actual mounted-content
 | --- | --- | --- |
 | `sbox_maxjunkjet` | 40 | 0-200 live objects per player; 0 disables launching |
 | `junkjet_cooldown` | 0.2 | 0.1-5 seconds between launches |
+| `junkjet_crawlerchance` | 75 | 0-100 percent chance of surviving a qualifying first body cut |
 
 
 Normal Sandbox prop/SENT limits, spawn permission hooks, entity admin restrictions, and spawned-object hooks are respected. Each launch has creator attribution, undo, and a dedicated cleanup category. Objects are removed when their owner disconnects. Blocked muzzle space and unusable physics produce feedback instead of invisible or stuck launches.

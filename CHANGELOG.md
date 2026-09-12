@@ -2,6 +2,7 @@
 
 - Correct the addon layout so a repository checkout is loadable.
 - Enable native gravity-gun launch state on real sawblade physics props: proper spin axis, sharp-prop damage, zombie dismemberment, and the engine's embedding/release interaction. Add direct sawblade-only selection.
+- First lethal body cuts usually leave a living classic-zombie torso with an intact headcrab (75% by default). Preserve the original NPC, AI, relationships and cleanup tracking; head hits and later crawler hits remain lethal. Configure with `junkjet_crawlerchance`.
 - Curate and validate 12 base-game physics props. Remove optional-content paths and random default weapon/entity pickups.
 - Fix personal default removal, empty-pool behavior, duplicate handling, input normalization, and player isolation.
 - Persist versioned personal pools on the server; sanitize malformed content and retain missing custom models for future mounts.

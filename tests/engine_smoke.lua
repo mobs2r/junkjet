@@ -2,6 +2,9 @@
 -- Copy this file to lua/junkjet/engine_smoke.lua and run lua_openscript junkjet/engine_smoke.lua.
 if not SERVER then return end
 local results, created = {}, {}
+local crawlerSetting = GetConVar("junkjet_crawlerchance")
+local savedCrawlerChance = crawlerSetting and crawlerSetting:GetInt()
+if crawlerSetting then crawlerSetting:SetInt(0) end -- Exercise unmodified native lethal cutting.
 local function check(name, condition, detail)
     results[#results + 1] = {name = name, passed = condition == true, detail = tostring(detail or "")}
     print("JUNKJET_TEST " .. (condition and "PASS " or "FAIL ") .. name .. " " .. tostring(detail or ""))
@@ -9,6 +12,7 @@ end
 local function track(ent) created[#created + 1] = ent return ent end
 local restorePlayer
 local function finish()
+    if crawlerSetting then crawlerSetting:SetInt(savedCrawlerChance) end
     hook.Remove("EntityTakeDamage", "JunkJetSmokeDamage")
     hook.Remove("PlayerSpawnedProp", "JunkJetSmokeSpawn")
     hook.Remove("PlayerSpawnProp", "JunkJetSmokeDeny")

@@ -14,7 +14,9 @@ Garry's Mod build **2026.05.08 (10029)**, Windows, single-player Sandbox on `gm_
 - Random prop launch and timed sawblade dissolution succeeded.
 - Pool editor opened in-game with all 12 defaults; its rendered layout was inspected.
 
-The final engine smoke suite produced **52 passing checks**. Six engine-independent regression cases passed, and all Lua files passed Lua 5.1 parsing. Asset archive checks found both `.mdl` and `.phy` files for the 15 models used by the default props and supported entities.
+The native engine smoke suite produced **52 passing checks**. It now temporarily sets `junkjet_crawlerchance` to 0 to keep testing the native lethal path, then restores the setting. A separate crawler suite produced **18 passing checks**: actual blade body cuts leave the original NPC alive and crawling, actual head hits stay lethal, the headcrab/relationships/small hull/half-health pool survive conversion, later hits kill normally, and headless zombies, unmarked props, disabled survival and vetoed damage remain unaffected. A head kill before the deferred conversion cannot revive the zombie.
+
+Six engine-independent regression cases passed, and all Lua files passed Lua 5.1 parsing. Asset archive checks found both `.mdl` and `.phy` files for the 15 models used by the default props and supported entities.
 
 These checks do not establish compatibility with every multiplayer server, third-party NPC, damage hook, custom physics model, or game branch. Multiplayer pool isolation/reconnect behavior, interactive editor mutations, every scale setting, and dedicated-server behavior still need the manual checks below. Native blade behavior retains the engine's speed, impact-angle, material, and first-collision conditions.
 
@@ -47,6 +49,8 @@ Use a fresh **single-player Sandbox** `gm_flatgrass` session. The test spawns pr
 5. Remove the copied test script when finished. It is never autorun by the shipped addon.
 
 The test assumes default cooldown and live limits, and enough Sandbox prop/SENT quota. It runs through real Garry's Mod APIs, not mocked collision or damage functions.
+
+For the crawler suite, use a fresh single-player map and copy `tests/crawler_smoke.lua` to `lua/junkjet/crawler_smoke.lua`, then run `lua_openscript junkjet/crawler_smoke.lua`. It temporarily enables god mode for its player, uses deterministic 0%/100% survival cases, restores the prior settings, and writes `garrysmod/data/junkjet_crawler_results.json`. Start with the default 75% setting for its default-setting assertion. This test may respawn a dead player and removes newly created headcrabs/ragdolls as well as its own test entities; use a fresh test session, not an ongoing game.
 
 ## Manual release checklist
 

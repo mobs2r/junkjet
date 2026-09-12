@@ -1,6 +1,7 @@
 -- Server-only: arm a real CPhysicsProp, preserving its native collision code.
 -- Source: CPhysicsProp::OnPhysGunDrop(LAUNCHED_BY_CANNON) in Valve's props.cpp.
 local M = {}
+include("junkjet/crawlers.lua")
 function M.Launch(ent, owner, velocity)
     if not IsValid(ent) or ent:GetClass() ~= "prop_physics" then return false end
     local phys = ent:GetPhysicsObject()
@@ -8,6 +9,7 @@ function M.Launch(ent, owner, velocity)
     -- This enables the model's world_stick first-impact interaction. The engine
     -- embeds the edge, stores its release position and enables physcannon pickup.
     if not ent:SetSaveValue("m_bFirstCollisionAfterLaunch", true) then return false end
+    ent.JunkJetLaunchedSawblade = true
     ent:SetPhysicsAttacker(owner, 120)
     phys:AddGameFlag(FVPHYSICS_WAS_THROWN)
     phys:AddGameFlag(FVPHYSICS_DMG_SLICE)
