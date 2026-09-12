@@ -1,70 +1,75 @@
 # Junk Jet
 
-A Garry's Mod tool that lets you launch random junk and entities at high speed. Perfect for chaos, testing, or just having fun.
+A Garry's Mod Sandbox tool for launching a personal collection of junk. Uses base-game assets; no other games or Workshop dependencies are required.
 
-## Features
+## Install
 
-- Launch a variety of props and entities with adjustable speed.
-- Right‑click any physics prop or entity to add/remove it from your personal launch pool.
-- Console commands for managing your pool manually.
-- Optional fire mode.
-- Optional slippery mode.
-- Optional dissolve mode with adjustable timer.
-- Prop scaling support.
-- Sawblade special behavior: spawns as a thrown sawblade, exactly like the gravity gun in Half‑Life 2 (slices enemies, sticks into walls, spins dangerously).
+Extract the `junkjet` folder into `GarrysMod/garrysmod/addons/`, then restart the game/server. The finished path must be `addons/junkjet/lua/weapons/gmod_tool/stools/junkjet.lua`. Remove an older loose copy of the same tool if you installed one manually, so it cannot override this version.
 
-## Installation
+Choose **Tools > Fun + Games > Junk Jet**.
 
-You can subscribe on the Steam Workshop, or if you prefer to install manually, follow these instructions:
+## Controls
 
-1. Download or clone this repository into your Garry's Mod `addons` folder.
-2. Ensure the folder is named `junkjet` (or any name you prefer) and contains the files are directly inside it.
-3. Restart Garry's Mod or run `menu_cleanupgmas` in console if needed.
-4. The tool will appear under **Tools > Fun + Games > Junk Jet**.
+- **Left click:** launch one item in the selected mode.
+- **Right click:** add/remove the aimed physics prop or supported entity.
+- **Reload (R):** open the pool editor, with search, model previews, content availability, and add/remove controls.
+- **Undo (Z):** remove the most recent launch. **Clean up my launches** removes all your Junk Jet objects.
 
-## File Structure
+The tool panel provides random, props-only, entities-only, and **sawblade-only** modes. Sawblade-only deliberately bypasses your saved pool. Random mode gives each available item equal probability.
 
-junkjet/
-└── lua/
-└── weapons/
-└── gmod_tool/
-└── stools/
-└── junkjet.lua
+Speed `1` means 1500 Source units/second, independent of prop mass; scale `1` means original size. Spread `0` fires straight. Speed, scale, spread, and lifetime are bounded on the server, including manually entered console values. Old saved slider values above the new range are clamped; use **Reset launch settings** to get the new defaults.
 
-No extra models or materials are required – everything uses base Garry's Mod assets. The add-on also supports launching custom content, but use at your own risk.
+Fire and slippery modes are optional. Dissolve is enabled by default after 10 seconds, with a removal fallback for entities that cannot dissolve. The slippery setting applies to ordinary physics projectiles; sawblade launches retain their native blade physics.
 
-## Usage
+## A real saved pool
 
-- **Left‑click**: Launch a random item from your current pool.
-- **Right‑click**: Scan the entity you're looking at. If it's a `prop_physics` or `sawblade_thrown`, its model is added/removed from your prop pool. For any other entity, its class name is added/removed from your entity pool.
+Every player starts with their own copy of the default props. Removing a default prop works immediately. **Empty pool** really empties it; **Restore default props** is a separate action. No entity pickups or weapons are mixed into the default pool.
 
-### Console Commands
+Pools persist on that server across reconnects and restarts in `garrysmod/data/junkjet/<SteamID64>.json`. They do not automatically transfer to other servers. Missing custom models remain saved, but are skipped when firing; the server is authoritative even if a client's availability column differs. Invalid saved JSON falls back to defaults. Each prop/entity list supports up to 128 unique items.
 
-| Command                  | Description                                       |
-|--------------------------|---------------------------------------------------|
-| `junkjet_addprop <model>`| Adds a prop model to your launch pool.            |
-| `junkjet_removeprop <model>` | Removes a prop model from your launch pool.   |
-| `junkjet_addentity <class>` | Adds an entity class to your launch pool.      |
-| `junkjet_removeentity <class>` | Removes an entity class from your launch pool.|
-| `junkjet_clearitems`     | Clears both your prop and entity pools.           |
+Supported entity classes are `sent_ball`, `item_healthkit`, and `item_battery`. Arbitrary classes and weapons are deliberately excluded because many cannot be safely created and launched as physics objects. Custom **physics prop models** remain supported. Player, NPC, and NextBot scanning is rejected.
 
-*Note: Your personal pools are saved per‑player and persist until you leave the server or clear them.*
+## Sawblade behavior
 
-## Configuration
+Sawblade-only mode launches the actual sawblade model as a native `prop_physics`. The addon enables the same first-impact state and physics flags used for a gravity-gun launch, and applies spin around the blade's proper axis.
 
-The following settings are available in the tool's context menu:
+The Source engine then handles sharp-prop collision damage, zombie dismemberment, material/angle-dependent embedding, and releasing an embedded blade with the gravity gun. There is no scripted damage substitute, movement controller, weld, or freeze-on-contact callback.
 
-- **Fire Mode**: Ignites launched objects.
-- **Slippery Mode**: Gives launched physics objects an `ice` material.
-- **Dissolve Mode**: Automatically dissolves launched objects after a set time.
-- **Launch Speed**: Multiplier for launch force.
-- **Prop Scaling**: Scales props on launch.
-- **Dissolve Speed**: Time in seconds before dissolution.
+Native behavior has native conditions: slow impacts, glancing hits, metal/grate surfaces, and impacts after the initial collision can bounce rather than embed. Damage depends on physics and server rules. Gravity, drag, and the server's VPhysics velocity limits still apply. Default speed is chosen above the native embedding threshold. These are the engine's rules, not a guarantee that every shot cuts or sticks.
 
-## Default Launch Pool
+See `TESTING.md` for actual zombie torso/leg separation and native embedding checks.
 
-The addon ships with a default list of props and entities. Right‑click scanning can modify your personal copy. To restore defaults, simply clear your pool (`junkjet_clearitems`) – the tool will fall back to the default lists.
+## Default props
 
-## Contributing
+Watermelon, traffic cone, sawblade, wooden chair, oil drum, wooden crate, metal bucket, metal can, milk carton, plastic bottle, radiator, and radio receiver. The list uses Half-Life 2 assets bundled with Garry's Mod. Each model is validated as a physics prop on the server before it enters a fresh default pool and again before launch. Optional-content models, the incorrect explosive-barrel path, and default weapon pickups were removed.
 
-Pull requests are welcome. If you find bugs or have suggestions, please open an issue.
+Run **Audit default models** (`junkjet_diagnose`) for the actual mounted-content verdict on your server.
+
+## Console commands
+
+| Command | Action |
+| --- | --- |
+| `junkjet_menu` | Open the pool editor |
+| `junkjet_addprop <model>` | Validate and add a physics model |
+| `junkjet_removeprop <model>` | Remove a model, including defaults or missing content |
+| `junkjet_addentity <class>` | Add a supported entity |
+| `junkjet_removeentity <class>` | Remove an entity |
+| `junkjet_clearitems` | Save empty prop and entity lists |
+| `junkjet_resetitems` | Restore available default props |
+| `junkjet_listitems` | Print the pool to the console |
+| `junkjet_cleanup` | Remove your live launches |
+| `junkjet_diagnose` | Audit default models |
+
+## Server controls
+
+| ConVar | Default | Allowed range / purpose |
+| --- | --- | --- |
+| `sbox_maxjunkjet` | 40 | 0-200 live objects per player; 0 disables launching |
+| `junkjet_cooldown` | 0.2 | 0.1-5 seconds between launches |
+
+
+Normal Sandbox prop/SENT limits, spawn permission hooks, entity admin restrictions, and spawned-object hooks are respected. Each launch has creator attribution, undo, and a dedicated cleanup category. Objects are removed when their owner disconnects. Blocked muzzle space and unusable physics produce feedback instead of invisible or stuck launches.
+
+## Development
+
+Runtime files live under `lua/`; no build step is needed. See `TESTING.md` for Lua regression tests and opt-in engine tests. Changes and compatibility notes are in `CHANGELOG.md`.
