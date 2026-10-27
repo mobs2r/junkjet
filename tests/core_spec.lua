@@ -1,0 +1,47 @@
+local core = dofile("lua/junkjet/core.lua")
+local passed = 0
+local function test(name, fn)
+    fn()
+    passed = passed + 1
+    print("PASS " .. name)
+end
+test("default removal edits a personal copy", function()
+    local a = core.Clean(core.DefaultProps, core.ValidModelPath)
+    local b = core.Clean(core.DefaultProps, core.ValidModelPath)
+    assert(core.Edit(a, core.SawModel, true))
+    assert(not core.Index(a, core.SawModel))
+    assert(core.Index(b, core.SawModel))
+    assert(core.Index(core.DefaultProps, core.SawModel))
+end)
+test("removing last item leaves an empty pool", function()
+    local pool = {core.SawModel}
+    assert(core.Edit(pool, core.SawModel, true))
+    assert(#pool == 0)
+    assert(#core.Clean(pool, core.ValidModelPath) == 0)
+end)
+test("normalization removes duplicates and invalid paths", function()
+    local pool = core.Clean({" MODELS\\props_junk\\sawblade001a.mdl ", core.SawModel,
+        "models/../../file.mdl", "bad", 7, false}, core.ValidModelPath)
+    assert(#pool == 1 and pool[1] == core.SawModel)
+end)
+test("bounds reject NaN and clamp infinities and stale settings", function()
+    assert(core.Number(0/0, 1, .25, 3) == 1)
+    assert(core.Number(math.huge, 1, .25, 3) == 3)
+    assert(core.Number(-math.huge, 1, .25, 3) == .25)
+    assert(core.Number("100", 1, .25, 3) == 3)
+    assert(core.Number("invalid", 1, .25, 3) == 1)
+end)
+test("pool length and duplicate limits", function()
+    local pool = {}
+    for i = 1, 128 do assert(core.Edit(pool, tostring(i), false)) end
+    assert(not core.Edit(pool, "129", false))
+    assert(not core.Edit(pool, "1", false))
+    assert(not core.Edit(pool, "missing", true))
+    assert(#pool == 128)
+end)
+test("entity allowlist rejects arbitrary classes", function()
+    local pool = core.Clean({"sent_ball", "point_servercommand", "weapon_frag", "player", "item_healthkit"},
+        function(v) return core.EntityModels[v] ~= nil end)
+    assert(#pool == 2)
+end)
+print(passed .. " core regression tests passed")
