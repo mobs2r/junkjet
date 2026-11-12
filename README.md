@@ -78,3 +78,12 @@ Normal Sandbox prop/SENT limits, spawn permission hooks, entity admin restrictio
 ## Development
 
 Runtime files live under `lua/`; no build step is needed. See `TESTING.md` for Lua regression tests and opt-in engine tests. Changes and compatibility notes are in `CHANGELOG.md`.
+
+Before a pull request, run the regression tests and [glualint](https://github.com/FPtje/GLuaFixer) (settings in `.glualint.json`); both should pass cleanly:
+
+```sh
+luajit tests/core_spec.lua
+glualint lint lua tests
+```
+
+`addon.json` keeps tests, docs, `LICENSE` and repository config out of the Workshop pack (gmad refuses files outside its whitelist).
