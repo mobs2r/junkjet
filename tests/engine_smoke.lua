@@ -107,7 +107,7 @@ local function run()
     end
     local oldGibs = {}
     for _, ent in ipairs(ents.GetAll()) do oldGibs[ent] = true end
-    local blade = bladeAt(origin, Angle(0, 0, 0), Vector(1500, 0, 0))
+    bladeAt(origin, Angle(0, 0, 0), Vector(1500, 0, 0))
     local ground = util.TraceLine({start = origin + Vector(0, 300, 200), endpos = origin + Vector(0, 300, -20000), mask = MASK_SOLID_BRUSHONLY})
     local wallBlade = bladeAt(ground.HitPos + Vector(0, 0, 200), Angle(90, 0, 0), Vector(0, 0, -1500))
     timer.Simple(1, function()

@@ -1,3 +1,10 @@
+# Unreleased
+
+- Remember models that passed the physics-prop check, so each launch no longer re-validates the whole pool (failures are still rechecked).
+- `junkjet_listitems` prints the pool in short console chunks instead of one oversized message.
+- `Core.Normalize` returns exactly one value.
+- Keep `LICENSE` and lint config out of the Workshop pack; add `.glualint.json` and a regression test.
+
 # Quality-of-life update
 
 - Correct the addon layout so a repository checkout is loadable.

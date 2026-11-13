@@ -22,8 +22,15 @@ local limit = CreateConVar("sbox_maxjunkjet", "40", FCVAR_ARCHIVE, "Maximum live
 local cooldown = CreateConVar("junkjet_cooldown", "0.2", FCVAR_ARCHIVE, "Minimum seconds between launches", 0.1, 5)
 local states = setmetatable({}, {__mode = "k"})
 local function tell(ply, message) ply:ChatPrint("[Junk Jet] " .. message) end
+-- Every launch filters the whole pool (up to 128 models), so remember models
+-- that passed. Failures are rechecked, in case content is mounted later.
+local validProps = {}
 local function validProp(model)
-    return Core.ValidModelPath(model) and util.IsValidModel(model) and util.IsValidProp(model)
+    if not Core.ValidModelPath(model) then return false end
+    if validProps[model] then return true end
+    local ok = util.IsValidModel(model) and util.IsValidProp(model)
+    if ok then validProps[model] = true end
+    return ok
 end
 local function defaults() return {Props = Core.Clean(Core.DefaultProps, validProp), Entities = {}} end
 local function path(ply)
@@ -103,7 +110,22 @@ command("requestpool", sync)
 command("listitems", function(ply)
     local data = state(ply)
     tell(ply, #data.Props .. " props, " .. #data.Entities .. " entities. See console.")
-    ply:PrintMessage(HUD_PRINTCONSOLE, table.concat(data.Props, "\n") .. "\n" .. table.concat(data.Entities, "\n"))
+    -- One message per ~200 bytes: a full pool (256 entries of up to 200 chars) is
+    -- far past what a single PrintMessage can carry.
+    local chunk = {}
+    local size = 0
+    local function flush()
+        if #chunk > 0 then ply:PrintMessage(HUD_PRINTCONSOLE, table.concat(chunk, "\n") .. "\n") end
+        chunk, size = {}, 0
+    end
+    for _, list in ipairs({data.Props, data.Entities}) do
+        for _, value in ipairs(list) do
+            if size + #value + 1 > 200 then flush() end
+            chunk[#chunk + 1] = value
+            size = size + #value + 1
+        end
+    end
+    flush()
 end)
 command("cleanup", function(ply)
     for ent in pairs(state(ply).Live) do if IsValid(ent) then ent:Remove() end end

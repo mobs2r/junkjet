@@ -13,7 +13,8 @@ M.EntityModels = {sent_ball = "models/Combine_Helicopter/helicopter_bomb01.mdl",
 M.MaxItems = 128
 function M.Normalize(value)
     if type(value) ~= "string" then return nil end
-    return value:match("^%s*(.-)%s*$"):lower():gsub("\\", "/")
+    -- Parenthesised: gsub also returns a count, which must not leak to callers.
+    return (value:match("^%s*(.-)%s*$"):lower():gsub("\\", "/"))
 end
 function M.ValidModelPath(value)
     return type(value) == "string" and #value <= 200 and value:match("^models/[%w_/%-%.]+%.mdl$") ~= nil
